@@ -7,6 +7,8 @@ class EmployeeDashboard extends StatelessWidget {
 
   Future<void> _logout(BuildContext context) async {
     await Session.clear();
+    if (!context.mounted) return;
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -18,7 +20,7 @@ class EmployeeDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Washing Employee Dashboard"),
+        title: const Text("Employee Dashboard"),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -27,7 +29,10 @@ class EmployeeDashboard extends StatelessWidget {
         ],
       ),
       body: const Center(
-        child: Text("Here: view bookings, update car status, etc."),
+        child: Text(
+          "Employee features here",
+          style: TextStyle(fontSize: 16),
+        ),
       ),
     );
   }

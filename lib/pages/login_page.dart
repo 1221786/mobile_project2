@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../core/session.dart';
+
 import 'dashboards/customer_dashboard.dart';
 import 'dashboards/employee_dashboard.dart';
 import 'dashboards/manager_dashboard.dart';
@@ -33,8 +34,10 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _goByRole(String role) {
+    final r = role.trim().toUpperCase();
+
     Widget page;
-    switch (role) {
+    switch (r) {
       case "CUSTOMER":
         page = const CustomerDashboard();
         break;
@@ -48,7 +51,10 @@ class _LoginPageState extends State<LoginPage> {
         page = const CustomerDashboard();
     }
 
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => page));
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => page),
+    );
   }
 
   Future<void> _login() async {
@@ -87,34 +93,65 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Login")),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextField(
-              controller: _emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: "Email",
-                border: OutlineInputBorder(),
+            // Car Image
+            Image.asset('assets/carone.jpg', width: 200), // تأكد من إضافة الصورة في مجلد "assets"
+            
+            // Title
+            SizedBox(height: 20),
+            Text(
+              'Car Rental Ramallah',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
               ),
             ),
-            const SizedBox(height: 12),
+            
+            // Subtitle/Description
+            SizedBox(height: 10),
+            Text(
+              'Easily rent a car for any trip',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            
+            // Email TextField
+            SizedBox(height: 40),
+            TextField(
+              controller: _emailCtrl,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.email),
+              ),
+            ),
+            
+            // Password TextField
+            SizedBox(height: 12),
             TextField(
               controller: _passCtrl,
               obscureText: _hidePass,
               decoration: InputDecoration(
-                labelText: "Password",
-                border: const OutlineInputBorder(),
+                labelText: 'Password',
+                border: OutlineInputBorder(),
                 suffixIcon: IconButton(
                   icon: Icon(_hidePass ? Icons.visibility : Icons.visibility_off),
                   onPressed: () => setState(() => _hidePass = !_hidePass),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-
+            
+            // Login Button
+            SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -123,12 +160,18 @@ class _LoginPageState extends State<LoginPage> {
                 child: _loading
                     ? const CircularProgressIndicator()
                     : const Text("Login"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue, // اللون الأزرق
+                  minimumSize: Size(200, 50), // الحجم
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ),
               ),
             ),
-
+            
+            // SignUp Button
             const SizedBox(height: 14),
-
-            // ✅ Sign Up Link
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

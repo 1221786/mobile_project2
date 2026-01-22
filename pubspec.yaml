@@ -12,9 +12,20 @@ dependencies:
   flutter:
     sdk: flutter
 
-  shared_preferences: ^2.2.3
+  # UI
   cupertino_icons: ^1.0.8
+
+  # Network & Storage
   http: ^1.2.2
+  shared_preferences: ^2.2.3
+
+  # Notifications (Local)
+  flutter_local_notifications: ^17.2.2
+  timezone: ^0.9.4
+  flutter_timezone: ^1.0.8
+
+  # File Picker (images for accident report)
+  file_picker: ^8.0.0
 
 dev_dependencies:
   flutter_test:
@@ -24,3 +35,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/cars.jpg
+    - assets/carone.jpg
+
+
+
+
+

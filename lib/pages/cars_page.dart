@@ -54,10 +54,34 @@ class _CarsPageState extends State<CarsPage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  Widget _statusBadge(String status) {
+    final s = status.toUpperCase();
+    final isBooked = (s == "BOOKED");
+
+    final text = isBooked ? "محجوزة" : "متاحة";
+    final color = isBooked ? Colors.red : Colors.green;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Available Cars")),
+      appBar: AppBar(title: const Text("Cars")),
       body: Column(
         children: [
           Padding(
@@ -69,9 +93,7 @@ class _CarsPageState extends State<CarsPage> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: _selectedType,
-                        items: _types
-                            .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                            .toList(),
+                        items: _types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                         onChanged: (v) {
                           setState(() => _selectedType = v!);
                           _loadCars();
@@ -107,9 +129,7 @@ class _CarsPageState extends State<CarsPage> {
                   children: [
                     const Text("Price Range"),
                     const SizedBox(width: 10),
-                    Text(
-                      "\$${_priceRange.start.toStringAsFixed(0)} - \$${_priceRange.end.toStringAsFixed(0)}",
-                    ),
+                    Text("\$${_priceRange.start.toStringAsFixed(0)} - \$${_priceRange.end.toStringAsFixed(0)}"),
                   ],
                 ),
                 RangeSlider(
@@ -137,6 +157,7 @@ class _CarsPageState extends State<CarsPage> {
                         itemCount: _cars.length,
                         itemBuilder: (context, i) {
                           final c = _cars[i];
+                          final isBooked = c.status.toUpperCase() == "BOOKED";
 
                           return Card(
                             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -148,21 +169,22 @@ class _CarsPageState extends State<CarsPage> {
                                   width: 60,
                                   height: 60,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                      const Icon(Icons.image_not_supported),
+                                  errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported),
                                 ),
                               ),
                               title: Text("${c.brand} ${c.model} (${c.year})"),
-                              subtitle: Text(
-                                "${c.type} • ${c.transmission} • \$${c.dailyPrice}/day",
-                              ),
-                              trailing: Text(c.status),
+                              subtitle: Text("${c.type} • ${c.transmission} • \$${c.dailyPrice}/day"),
+                              trailing: _statusBadge(c.status),
+
+                              // ✅ منع فتح التفاصيل إذا السيارة محجوزة الآن
                               onTap: () {
+                                if (isBooked) {
+                                  _toast("هاي السيارة محجوزة حالياً ✅ جرّب سيارة ثانية");
+                                  return;
+                                }
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (_) => CarDetailsPage(carId: c.id),
-                                  ),
+                                  MaterialPageRoute(builder: (_) => CarDetailsPage(carId: c.id)),
                                 );
                               },
                             ),

@@ -86,6 +86,8 @@ class _BookingPageState extends State<BookingPage> {
     });
   }
 
+  String _fmtDate(DateTime dt) => dt.toString().substring(0, 10);
+
   Future<void> _submit() async {
     if (pickup == null || dropoff == null) {
       _toast("Please select pickup & drop-off dates");
@@ -113,6 +115,25 @@ class _BookingPageState extends State<BookingPage> {
     setState(() => _sending = true);
 
     try {
+      // ✅ 1) check availability first
+      final availability = await _service.checkAvailability(
+        carId: widget.carId,
+        start: pickup!,
+        end: dropoff!,
+      );
+
+      final available = availability["available"] == true;
+
+      if (!available) {
+        final conflict = availability["conflict"];
+        final cStart = conflict?["start_datetime"]?.toString() ?? "";
+        final cEnd = conflict?["end_datetime"]?.toString() ?? "";
+
+        _toast("محجوزة من $cStart إلى $cEnd ✅ جرّب تاريخ بعد $cEnd");
+        return;
+      }
+
+      // ✅ 2) create booking if available
       final res = await _service.createBooking(
         carId: widget.carId,
         customerId: int.parse(user["user_id"].toString()),
@@ -133,8 +154,8 @@ class _BookingPageState extends State<BookingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final pickupText = pickup == null ? "Select Pickup Date" : pickup.toString().substring(0, 10);
-    final dropoffText = dropoff == null ? "Select Drop-off Date" : dropoff.toString().substring(0, 10);
+    final pickupText = pickup == null ? "Select Pickup Date" : _fmtDate(pickup!);
+    final dropoffText = dropoff == null ? "Select Drop-off Date" : _fmtDate(dropoff!);
 
     return Scaffold(
       appBar: AppBar(title: const Text("Booking")),
@@ -152,7 +173,6 @@ class _BookingPageState extends State<BookingPage> {
               trailing: const Icon(Icons.date_range),
               onTap: () => _pickDate(isPickup: false),
             ),
-
             const SizedBox(height: 12),
 
             DropdownButtonFormField<String>(

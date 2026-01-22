@@ -2,20 +2,24 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../core/api_config.dart';
 
-class AuthService {
-  Future<Map<String, dynamic>> login({
+class ProfileService {
+  Future<Map<String, dynamic>> updateProfile({
+    required int userId,
+    required String fullName,
     required String email,
-    required String password,
+    required String phone,
   }) async {
-    final url = Uri.parse("${ApiConfig.baseUrl}/auth_login.php");
+    final url = Uri.parse("${ApiConfig.baseUrl}/update_profile.php");
 
     final res = await http
         .post(
           url,
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({
-            "email": email.trim(),
-            "password": password,
+            "user_id": userId,
+            "full_name": fullName,
+            "email": email,
+            "phone": phone,
           }),
         )
         .timeout(const Duration(seconds: 12));
@@ -28,40 +32,28 @@ class AuthService {
     }
 
     if (res.statusCode != 200 || json["ok"] != true) {
-      throw Exception(json["message"] ?? "Login failed");
+      throw Exception(json["message"] ?? "Server error");
     }
 
     return json;
   }
 
-  Future<Map<String, dynamic>> register({
-    required String fullName,
-    required String phone,
-    required String email,
-    required String password,
-    required String role,
-    String? managerCode, // ✅ optional
+  Future<void> changePassword({
+    required int userId,
+    required String oldPassword,
+    required String newPassword,
   }) async {
-    final url = Uri.parse("${ApiConfig.baseUrl}/auth_register.php");
-
-    final body = {
-      "full_name": fullName.trim(),
-      "phone": phone.trim(),
-      "email": email.trim(),
-      "password": password,
-      "role": role.trim(),
-    };
-
-    // ✅ only send if manager
-    if (role.trim().toUpperCase() == "COMPANY_MANAGER") {
-      body["manager_code"] = (managerCode ?? "").trim();
-    }
+    final url = Uri.parse("${ApiConfig.baseUrl}/change_password.php");
 
     final res = await http
         .post(
           url,
           headers: {"Content-Type": "application/json"},
-          body: jsonEncode(body),
+          body: jsonEncode({
+            "user_id": userId,
+            "old_password": oldPassword,
+            "new_password": newPassword,
+          }),
         )
         .timeout(const Duration(seconds: 12));
 
@@ -73,9 +65,7 @@ class AuthService {
     }
 
     if (res.statusCode != 200 || json["ok"] != true) {
-      throw Exception(json["message"] ?? "Register failed");
+      throw Exception(json["message"] ?? "Server error");
     }
-
-    return json;
   }
 }
