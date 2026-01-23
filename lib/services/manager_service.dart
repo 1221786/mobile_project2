@@ -34,9 +34,169 @@ class ManagerService {
     return Map<String, dynamic>.from(data);
   }
 
-  // (خلي fetchStats زي ما عندك)
   Future<Map<String, dynamic>> fetchStats() async {
-    // ...
-    throw UnimplementedError();
+    final uri = Uri.parse("${ApiConfig.baseUrl}/manager_dashboard_stats.php");
+    final res = await http.get(uri).timeout(const Duration(seconds: 12));
+
+    final json = jsonDecode(res.body) as Map<String, dynamic>;
+    if (res.statusCode != 200 || json["ok"] != true) {
+      throw Exception(json["message"] ?? "Failed to load stats");
+    }
+    return Map<String, dynamic>.from(json["data"] ?? {});
+  }
+
+  Future<List<Map<String, dynamic>>> getAllCars() async {
+    final uri = Uri.parse("${ApiConfig.baseUrl}/cars_list.php");
+    final res = await http.get(uri).timeout(const Duration(seconds: 12));
+
+    final json = jsonDecode(res.body) as Map<String, dynamic>;
+    if (res.statusCode != 200 || json["ok"] != true) {
+      throw Exception(json["message"] ?? "Failed to load cars");
+    }
+
+    final List list = (json["data"] ?? []) as List;
+    return list.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  Future<Map<String, dynamic>> updateCarStatus({
+    required int carId,
+    required String status,
+  }) async {
+    final uri = Uri.parse("${ApiConfig.baseUrl}/manager_update_car_status.php");
+    final res = await http.post(
+      uri,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "car_id": carId,
+        "status": status,
+      }),
+    ).timeout(const Duration(seconds: 12));
+
+    final json = jsonDecode(res.body) as Map<String, dynamic>;
+    if (res.statusCode != 200 || json["ok"] != true) {
+      throw Exception(json["message"] ?? "Failed to update car");
+    }
+    return Map<String, dynamic>.from(json);
+  }
+
+  Future<List<Map<String, dynamic>>> getAllBookings() async {
+    final uri = Uri.parse("${ApiConfig.baseUrl}/manager_bookings_list.php");
+    final res = await http.get(uri).timeout(const Duration(seconds: 12));
+
+    final json = jsonDecode(res.body) as Map<String, dynamic>;
+    if (res.statusCode != 200 || json["ok"] != true) {
+      throw Exception(json["message"] ?? "Failed to load bookings");
+    }
+
+    final List list = (json["data"] ?? []) as List;
+    return list.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  Future<Map<String, dynamic>> approveBooking({
+    required int bookingId,
+  }) async {
+    final uri = Uri.parse("${ApiConfig.baseUrl}/manager_approve_booking.php");
+    final res = await http.post(
+      uri,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"booking_id": bookingId}),
+    ).timeout(const Duration(seconds: 12));
+
+    final json = jsonDecode(res.body) as Map<String, dynamic>;
+    if (res.statusCode != 200 || json["ok"] != true) {
+      throw Exception(json["message"] ?? "Failed to approve booking");
+    }
+    return Map<String, dynamic>.from(json);
+  }
+
+  Future<Map<String, dynamic>> rejectBooking({
+    required int bookingId,
+    String reason = "Rejected by manager",
+  }) async {
+    final uri = Uri.parse("${ApiConfig.baseUrl}/manager_reject_booking.php");
+    final res = await http.post(
+      uri,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "booking_id": bookingId,
+        "reason": reason,
+      }),
+    ).timeout(const Duration(seconds: 12));
+
+    final json = jsonDecode(res.body) as Map<String, dynamic>;
+    if (res.statusCode != 200 || json["ok"] != true) {
+      throw Exception(json["message"] ?? "Failed to reject booking");
+    }
+    return Map<String, dynamic>.from(json);
+  }
+
+  Future<List<Map<String, dynamic>>> getAccidents() async {
+    final uri = Uri.parse("${ApiConfig.baseUrl}/manager_accidents_list.php");
+    final res = await http.get(uri).timeout(const Duration(seconds: 12));
+
+    final json = jsonDecode(res.body) as Map<String, dynamic>;
+    if (res.statusCode != 200 || json["ok"] != true) {
+      throw Exception(json["message"] ?? "Failed to load accidents");
+    }
+
+    final List list = (json["data"] ?? []) as List;
+    return list.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  Future<Map<String, dynamic>> handleAccident({
+    required int accidentId,
+    required String decision, // APPROVED, REJECTED, PENDING
+    String? notes,
+  }) async {
+    final uri = Uri.parse("${ApiConfig.baseUrl}/manager_handle_accident.php");
+    final res = await http.post(
+      uri,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "accident_id": accidentId,
+        "decision": decision,
+        "notes": notes ?? "",
+      }),
+    ).timeout(const Duration(seconds: 12));
+
+    final json = jsonDecode(res.body) as Map<String, dynamic>;
+    if (res.statusCode != 200 || json["ok"] != true) {
+      throw Exception(json["message"] ?? "Failed to handle accident");
+    }
+    return Map<String, dynamic>.from(json);
+  }
+
+  Future<List<Map<String, dynamic>>> getEmployees() async {
+    final uri = Uri.parse("${ApiConfig.baseUrl}/manager_employees_list.php");
+    final res = await http.get(uri).timeout(const Duration(seconds: 12));
+
+    final json = jsonDecode(res.body) as Map<String, dynamic>;
+    if (res.statusCode != 200 || json["ok"] != true) {
+      throw Exception(json["message"] ?? "Failed to load employees");
+    }
+
+    final List list = (json["data"] ?? []) as List;
+    return list.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  Future<Map<String, dynamic>> toggleEmployeeStatus({
+    required int userId,
+    required bool isActive,
+  }) async {
+    final uri = Uri.parse("${ApiConfig.baseUrl}/manager_toggle_employee.php");
+    final res = await http.post(
+      uri,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "user_id": userId,
+        "is_active": isActive ? 1 : 0,
+      }),
+    ).timeout(const Duration(seconds: 12));
+
+    final json = jsonDecode(res.body) as Map<String, dynamic>;
+    if (res.statusCode != 200 || json["ok"] != true) {
+      throw Exception(json["message"] ?? "Failed to update employee");
+    }
+    return Map<String, dynamic>.from(json);
   }
 }
