@@ -37,7 +37,8 @@ class Car {
       fuelType: j['fuel_type'].toString(),
       dailyPrice: double.parse(j['daily_price'].toString()),
       status: j['status'].toString(),
-      coverUrl: (j['cover_url'] ?? '').toString(),
+      coverUrl: (j['cover_url'] ?? '').toString().trim(), // ✅ fixed
     );
   }
 }
+
