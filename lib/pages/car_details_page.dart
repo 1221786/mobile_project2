@@ -43,6 +43,7 @@ class _CarDetailsPageState extends State<CarDetailsPage> {
     );
   }
 
+
   // Resolve URL (supports "url" or "image_name")
   String _resolveImageUrl(Map<String, dynamic> img) {
     final url = (img["url"] ?? "").toString().trim();
@@ -53,7 +54,7 @@ class _CarDetailsPageState extends State<CarDetailsPage> {
     final name = (img["image_name"] ?? "").toString().trim();
     if (name.isEmpty) return "";
 
-    return "${ApiConfig.carsImagesBase}/$name";
+    return "${ApiConfig()}/$name";
   }
 
   Widget _dot(bool active) {
