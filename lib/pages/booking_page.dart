@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../core/session.dart';
 import '../services/booking_service.dart';
+import 'pick_location_page.dart';
 
 class BookingPage extends StatefulWidget {
   final int carId;
@@ -15,37 +17,24 @@ class BookingPage extends StatefulWidget {
 class _BookingPageState extends State<BookingPage> {
   DateTime? pickup, dropoff;
 
-  final _locations = const [
-    "Ramallah – City Center",
-    "Ramallah – Al-Manara",
-    "Ramallah – Company Branch",
-    "Birzeit",
-    "Other (Write address)",
-  ];
-
-  String pickupLoc = "";
-  String dropoffLoc = "";
-
-  bool pickupOther = false;
-  bool dropoffOther = false;
-
-  final _pickupOtherCtrl = TextEditingController();
-  final _dropoffOtherCtrl = TextEditingController();
+  // Map selection
+  LatLng? pickupLatLng;
+  LatLng? dropoffLatLng;
+  String pickupAddress = "";
+  String dropoffAddress = "";
 
   double total = 0;
-
   final _service = BookingService();
   bool _sending = false;
 
-  @override
-  void dispose() {
-    _pickupOtherCtrl.dispose();
-    _dropoffOtherCtrl.dispose();
-    super.dispose();
-  }
-
   void _toast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  String _two(int n) => n.toString().padLeft(2, '0');
+
+  String _fmtDateTime(DateTime dt) {
+    return "${dt.year}-${_two(dt.month)}-${_two(dt.day)}  ${_two(dt.hour)}:${_two(dt.minute)}";
   }
 
   void _calc() {
@@ -54,25 +43,43 @@ class _BookingPageState extends State<BookingPage> {
       return;
     }
 
-    final diffHours = dropoff!.difference(pickup!).inHours;
-    final days = (diffHours / 24).ceil();
-    final safeDays = days <= 0 ? 1 : days;
+    final diffMinutes = dropoff!.difference(pickup!).inMinutes;
+    if (diffMinutes <= 0) {
+      setState(() => total = 0);
+      return;
+    }
 
+    final days = (diffMinutes / (24 * 60)).ceil();
+    final safeDays = days <= 0 ? 1 : days;
     setState(() => total = safeDays * widget.dailyPrice);
   }
 
-  Future<void> _pickDate({required bool isPickup}) async {
+  Future<void> _pickDateTime({required bool isPickup}) async {
+    final now = DateTime.now();
+
     final d = await showDatePicker(
       context: context,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      initialDate: DateTime.now(),
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+      initialDate: isPickup
+          ? (pickup ?? now)
+          : (dropoff ?? (pickup?.add(const Duration(hours: 1)) ?? now)),
     );
     if (d == null) return;
 
-    setState(() {
-      final selected = DateTime(d.year, d.month, d.day, 0, 0);
+    final t = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(
+        isPickup
+            ? (pickup ?? now)
+            : (dropoff ?? (pickup?.add(const Duration(hours: 1)) ?? now)),
+      ),
+    );
+    if (t == null) return;
 
+    final selected = DateTime(d.year, d.month, d.day, t.hour, t.minute);
+
+    setState(() {
       if (isPickup) {
         pickup = selected;
         if (dropoff != null && !dropoff!.isAfter(pickup!)) {
@@ -81,20 +88,57 @@ class _BookingPageState extends State<BookingPage> {
       } else {
         dropoff = selected;
       }
-
       _calc();
     });
   }
 
-  String _fmtDate(DateTime dt) => dt.toString().substring(0, 10);
+  Future<void> _pickOnMap({required bool isPickup}) async {
+    const defaultRamallah = LatLng(31.9038, 35.2034);
+
+    final initial = isPickup
+        ? (pickupLatLng ?? defaultRamallah)
+        : (dropoffLatLng ?? defaultRamallah);
+
+    final PickLocationResult? res = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PickLocationPage(
+          title: isPickup ? "Select Pickup Location" : "Select Drop-off Location",
+          initial: initial,
+        ),
+      ),
+    );
+
+    if (res == null) return;
+
+    setState(() {
+      if (isPickup) {
+        pickupLatLng = res.latLng;
+        pickupAddress = res.address;
+      } else {
+        dropoffLatLng = res.latLng;
+        dropoffAddress = res.address;
+      }
+    });
+  }
 
   Future<void> _submit() async {
     if (pickup == null || dropoff == null) {
-      _toast("Please select pickup & drop-off dates");
+      _toast("Please select pickup & drop-off date/time");
       return;
     }
     if (!dropoff!.isAfter(pickup!)) {
       _toast("Drop-off must be after pickup");
+      return;
+    }
+
+    if (pickupLatLng == null || dropoffLatLng == null) {
+      _toast("Please select pickup & drop-off locations on the map");
+      return;
+    }
+
+    if (pickupAddress.trim().isEmpty || dropoffAddress.trim().isEmpty) {
+      _toast("Please confirm pickup & drop-off locations");
       return;
     }
 
@@ -104,18 +148,9 @@ class _BookingPageState extends State<BookingPage> {
       return;
     }
 
-    final finalPickup = pickupOther ? _pickupOtherCtrl.text.trim() : pickupLoc.trim();
-    final finalDropoff = dropoffOther ? _dropoffOtherCtrl.text.trim() : dropoffLoc.trim();
-
-    if (finalPickup.isEmpty || finalDropoff.isEmpty) {
-      _toast("Please select pickup & drop-off locations");
-      return;
-    }
-
     setState(() => _sending = true);
 
     try {
-      // ✅ 1) check availability first
       final availability = await _service.checkAvailability(
         carId: widget.carId,
         start: pickup!,
@@ -123,39 +158,82 @@ class _BookingPageState extends State<BookingPage> {
       );
 
       final available = availability["available"] == true;
-
       if (!available) {
         final conflict = availability["conflict"];
         final cStart = conflict?["start_datetime"]?.toString() ?? "";
         final cEnd = conflict?["end_datetime"]?.toString() ?? "";
-
         _toast("محجوزة من $cStart إلى $cEnd ✅ جرّب تاريخ بعد $cEnd");
         return;
       }
 
-      // ✅ 2) create booking if available
       final res = await _service.createBooking(
         carId: widget.carId,
         customerId: int.parse(user["user_id"].toString()),
         start: pickup!,
         end: dropoff!,
-        pickupAddress: finalPickup,
-        dropoffAddress: finalDropoff,
+        pickupAddress: pickupAddress.trim(),
+        dropoffAddress: dropoffAddress.trim(),
+        pickupLat: pickupLatLng!.latitude,
+        pickupLng: pickupLatLng!.longitude,
+        dropoffLat: dropoffLatLng!.latitude,
+        dropoffLng: dropoffLatLng!.longitude,
       );
 
       _toast("Booking created ✅ Total: \$${res["booking"]["total_price"]}");
-      Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
     } catch (e) {
-      _toast(e.toString());
+      _toast(e.toString().replaceFirst("Exception: ", ""));
     } finally {
       if (mounted) setState(() => _sending = false);
     }
   }
 
+  Widget _mapPickTile({
+    required String title,
+    required String value,
+    required VoidCallback onTap,
+    required IconData icon,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF2F4FA),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Icon(icon),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                value.isEmpty ? title : value,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: value.isEmpty ? Colors.black54 : Colors.black87,
+                ),
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final pickupText = pickup == null ? "Select Pickup Date" : _fmtDate(pickup!);
-    final dropoffText = dropoff == null ? "Select Drop-off Date" : _fmtDate(dropoff!);
+    final pickupText = pickup == null
+        ? "Select Pickup Date & Time"
+        : _fmtDateTime(pickup!);
+
+    final dropoffText = dropoff == null
+        ? "Select Drop-off Date & Time"
+        : _fmtDateTime(dropoff!);
 
     return Scaffold(
       appBar: AppBar(title: const Text("Booking")),
@@ -166,76 +244,28 @@ class _BookingPageState extends State<BookingPage> {
             ListTile(
               title: Text(pickupText),
               trailing: const Icon(Icons.date_range),
-              onTap: () => _pickDate(isPickup: true),
+              onTap: () => _pickDateTime(isPickup: true),
             ),
             ListTile(
               title: Text(dropoffText),
               trailing: const Icon(Icons.date_range),
-              onTap: () => _pickDate(isPickup: false),
+              onTap: () => _pickDateTime(isPickup: false),
             ),
             const SizedBox(height: 12),
 
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                labelText: "Pickup Location",
-                border: OutlineInputBorder(),
-              ),
-              items: _locations.map((l) => DropdownMenuItem(value: l, child: Text(l))).toList(),
-              onChanged: (v) {
-                setState(() {
-                  pickupLoc = v ?? "";
-                  pickupOther = pickupLoc.contains("Other");
-                  if (!pickupOther) _pickupOtherCtrl.clear();
-                });
-              },
+            _mapPickTile(
+              title: "Select Pickup Location on Map",
+              value: pickupAddress,
+              icon: Icons.location_on_rounded,
+              onTap: () => _pickOnMap(isPickup: true),
             ),
-            if (pickupOther)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: TextField(
-                  controller: _pickupOtherCtrl,
-                  decoration: const InputDecoration(
-                    labelText: "Enter pickup address",
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-
             const SizedBox(height: 12),
-
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                labelText: "Drop-off Location",
-                border: OutlineInputBorder(),
-              ),
-              items: ["Same as pickup", ..._locations]
-                  .map((l) => DropdownMenuItem(value: l, child: Text(l)))
-                  .toList(),
-              onChanged: (v) {
-                setState(() {
-                  if (v == "Same as pickup") {
-                    dropoffLoc = pickupLoc;
-                    dropoffOther = pickupOther;
-                    if (!dropoffOther) _dropoffOtherCtrl.clear();
-                  } else {
-                    dropoffLoc = v ?? "";
-                    dropoffOther = dropoffLoc.contains("Other");
-                    if (!dropoffOther) _dropoffOtherCtrl.clear();
-                  }
-                });
-              },
+            _mapPickTile(
+              title: "Select Drop-off Location on Map",
+              value: dropoffAddress,
+              icon: Icons.flag_rounded,
+              onTap: () => _pickOnMap(isPickup: false),
             ),
-            if (dropoffOther)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: TextField(
-                  controller: _dropoffOtherCtrl,
-                  decoration: const InputDecoration(
-                    labelText: "Enter drop-off address",
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
 
             const SizedBox(height: 20),
 

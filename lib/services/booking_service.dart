@@ -47,6 +47,13 @@ class BookingService {
     required DateTime end,
     required String pickupAddress,
     required String dropoffAddress,
+
+    // ✅ new coords
+    required double pickupLat,
+    required double pickupLng,
+    required double dropoffLat,
+    required double dropoffLng,
+
     double deliveryFee = 0,
     double discountAmount = 0,
     double addonsTotal = 0,
@@ -58,8 +65,16 @@ class BookingService {
       "customer_id": customerId,
       "start_datetime": start.toString().substring(0, 19),
       "end_datetime": end.toString().substring(0, 19),
+
       "pickup_address": pickupAddress,
       "dropoff_address": dropoffAddress,
+
+      // ✅ send coordinates
+      "pickup_lat": pickupLat,
+      "pickup_lng": pickupLng,
+      "dropoff_lat": dropoffLat,
+      "dropoff_lng": dropoffLng,
+
       "delivery_fee": deliveryFee,
       "discount_amount": discountAmount,
       "addons_total": addonsTotal,
