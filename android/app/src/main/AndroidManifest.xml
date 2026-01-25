@@ -1,14 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- ✅ لازم -->
+    <!-- ✅ Internet -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- ✅ Location permissions (needed for geolocator / my-location on map) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
     <application
         android:label="project"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
-        <!-- ✅ Google Maps API Key (حطي مفتاحك هون) -->
+        <!-- ✅ Google Maps API Key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="PUT_YOUR_API_KEY_HERE"/>
@@ -36,6 +40,7 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
     </application>
 
     <queries>
@@ -46,3 +51,4 @@
     </queries>
 
 </manifest>
+

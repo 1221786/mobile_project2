@@ -5,7 +5,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.10.7
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -21,10 +21,6 @@ dependencies:
   # Notifications (Local)
   flutter_local_notifications: ^17.2.2
   timezone: ^0.9.4
-<<<<<<< HEAD
-  flutter_timezone: ^2.0.1
-=======
->>>>>>> 727b8e9cba05445fa81aec2f3a8b50f1b1d87ba7
 
   # File Picker (images for accident report)
   file_picker: ^8.0.0
@@ -33,6 +29,9 @@ dependencies:
   google_maps_flutter: ^2.6.1
   geocoding: ^3.0.0
   geolocator: ^12.0.0
+
+  # Charts
+  fl_chart: ^0.69.0
 
 dev_dependencies:
   flutter_test:
@@ -44,8 +43,3 @@ flutter:
   assets:
     - assets/cars.jpg
     - assets/carone.jpg
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 727b8e9cba05445fa81aec2f3a8b50f1b1d87ba7

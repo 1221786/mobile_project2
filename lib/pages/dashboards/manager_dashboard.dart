@@ -9,6 +9,9 @@ import '../manager_accidents_page.dart';
 import '../manager_employees_page.dart';
 import '../profile_page.dart';
 
+// ✅ NEW: Statistics page import
+import '../manager_statistics_page.dart';
+
 class ManagerDashboard extends StatefulWidget {
   const ManagerDashboard({super.key});
 
@@ -56,23 +59,46 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
   }
 
   Future<void> _openCars() async {
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => const ManagerCarsPage()));
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ManagerCarsPage()),
+    );
   }
 
   Future<void> _openBookings() async {
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => const ManagerBookingsPage()));
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ManagerBookingsPage()),
+    );
   }
 
   Future<void> _openAccidents() async {
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => const ManagerAccidentsPage()));
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ManagerAccidentsPage()),
+    );
   }
 
   Future<void> _openEmployees() async {
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => const ManagerEmployeesPage()));
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ManagerEmployeesPage()),
+    );
   }
 
   Future<void> _openProfile() async {
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePage()));
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ProfilePage()),
+    );
+  }
+
+  // ✅ NEW: open Statistics
+  Future<void> _openStatistics() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ManagerStatisticsPage()),
+    );
   }
 
   double _toDouble(dynamic v) => double.tryParse(v.toString()) ?? 0.0;
@@ -140,18 +166,48 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _statItem("Available", (cars["available"] ?? 0).toString(), Icons.directions_car, Colors.green),
-                          _statItem("Unavailable", (cars["unavailable"] ?? 0).toString(), Icons.block, Colors.red),
-                          _statItem("Maintenance", (cars["maintenance"] ?? 0).toString(), Icons.build, Colors.orange),
+                          _statItem(
+                            "Available",
+                            (cars["available"] ?? 0).toString(),
+                            Icons.directions_car,
+                            Colors.green,
+                          ),
+                          _statItem(
+                            "Unavailable",
+                            (cars["unavailable"] ?? 0).toString(),
+                            Icons.block,
+                            Colors.red,
+                          ),
+                          _statItem(
+                            "Maintenance",
+                            (cars["maintenance"] ?? 0).toString(),
+                            Icons.build,
+                            Colors.orange,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _statItem("New Bookings", (d["new_bookings"] ?? 0).toString(), Icons.receipt_long, Colors.blue),
-                          _statItem("Revenue Today", "\$${today.toStringAsFixed(0)}", Icons.attach_money, Colors.green),
-                          _statItem("Revenue Week", "\$${week.toStringAsFixed(0)}", Icons.trending_up, Colors.purple),
+                          _statItem(
+                            "New Bookings",
+                            (d["new_bookings"] ?? 0).toString(),
+                            Icons.receipt_long,
+                            Colors.blue,
+                          ),
+                          _statItem(
+                            "Revenue Today",
+                            "\$${today.toStringAsFixed(0)}",
+                            Icons.attach_money,
+                            Colors.green,
+                          ),
+                          _statItem(
+                            "Revenue Week",
+                            "\$${week.toStringAsFixed(0)}",
+                            Icons.trending_up,
+                            Colors.purple,
+                          ),
                         ],
                       ),
                     ],
@@ -173,7 +229,11 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
                       color: _hoverBlue.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(Icons.add_circle_outline, size: 32, color: _hoverBlue),
+                    child: const Icon(
+                      Icons.add_circle_outline,
+                      size: 32,
+                      color: _hoverBlue,
+                    ),
                   ),
                   title: "Add New Car",
                   subtitle: "Register a new vehicle",
@@ -215,6 +275,15 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
                 ),
                 const SizedBox(height: 12),
 
+                // ✅ NEW: Statistics tile
+                _HoverTile(
+                  leadingIcon: Icons.insights_rounded,
+                  title: "Statistics",
+                  subtitle: "Bookings, revenue & top cars",
+                  onTap: _openStatistics,
+                ),
+                const SizedBox(height: 12),
+
                 _HoverTile(
                   leadingIcon: Icons.person_outline,
                   title: "Profile",
@@ -235,11 +304,15 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
         const SizedBox(height: 6),
         Text(
           value,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _textDark),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: _textDark,
+          ),
         ),
         Text(
           label,
-          style: TextStyle(fontSize: 11, color: _textMuted),
+          style: const TextStyle(fontSize: 11, color: _textMuted),
         ),
       ],
     );
@@ -266,10 +339,8 @@ class _HoverTile extends StatefulWidget {
     this.borderRadius = 18,
     this.baseColor = Colors.white,
     this.hoverColor = const Color(0xFF6EA8FF),
-
     this.leading,
     this.leadingIcon,
-
     required this.title,
     this.subtitle,
     required this.onTap,
@@ -325,9 +396,7 @@ class _HoverTileState extends State<_HoverTile> {
                   ),
                   child: Icon(widget.leadingIcon ?? Icons.circle, color: iconColor, size: 26),
                 ),
-
               const SizedBox(width: 14),
-
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -359,9 +428,7 @@ class _HoverTileState extends State<_HoverTile> {
                   ],
                 ),
               ),
-
               const SizedBox(width: 10),
-
               Icon(Icons.chevron_right_rounded, size: 34, color: iconColor),
             ],
           ),
