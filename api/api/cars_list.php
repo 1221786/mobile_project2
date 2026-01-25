@@ -8,9 +8,9 @@ $q    = trim($_GET['q'] ?? '');
 $minP = trim($_GET['minPrice'] ?? '');
 $maxP = trim($_GET['maxPrice'] ?? '');
 
-// ✅ Build base URL dynamically
+// ✅ Build base URL dynamically (works for 127.0.0.1 in browser + 10.0.2.2 in emulator + real domain in production)
 $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
-$host = $_SERVER['HTTP_HOST'];
+$host = $_SERVER['HTTP_HOST']; // e.g. 127.0.0.1 or 10.0.2.2
 $base = "$scheme://$host/api/uploads/cars/";
 
 // ✅ Default placeholder image (must exist)
@@ -21,6 +21,7 @@ SELECT
   c.car_id, c.brand, c.model, c.model_year, c.type,
   c.seats, c.transmission, c.fuel_type, c.daily_price,
 
+  -- ✅ status calculated based on current bookings
   CASE 
     WHEN EXISTS (
       SELECT 1 FROM bookings b
@@ -42,7 +43,6 @@ SELECT
 
 FROM cars c
 WHERE 1=1
-  AND c.deleted_at IS NULL
 ";
 
 $params = [];
